@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+
+
+
+@theme {
+  --color-back-darker: #0a0c0f;
+  --color-back-primary: #0f1115;
+  --color-back-secondary: #171a20;
+  --color-back-elevated: #1f232b;
+  --color-back-alpha-xs: oklch(1 0 0 / 4%);
+  --color-back-brended: oklch(0.62 0.19 259 / 14%);
+
+  --color-text-primary: #e7e9ec;
+  --color-text-secondary: #9aa1ac;
+  --color-text-primary-inverted: #0a0c0f;
+
+  --color-border-secon: #262a31;
+  --color-border-brended: oklch(0.62 0.19 259 / 50%);
+
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+
+  --color-success-primary: #22c55e;
+  --color-success-secondary: #4ade80;
+  --color-error-primary: #ef4444;
+  --color-error-secondary: #f87171;
+  --color-warning-primary: #f59e0b;
+  --color-warning-secondary: #fbbf24;
+
+  --color-gold-400: var(--color-brand-400);
+  --color-gold-500: var(--color-brand-500);
+  --color-gold-600: var(--color-brand-600);
+  --color-gold-700: var(--color-brand-700);
+
+  --color-pablo-darker: var(--color-back-darker);
+  --color-pablo-dark: var(--color-back-primary);
+  --color-pablo-card: var(--color-back-secondary);
+  --color-pablo-cardLight: var(--color-back-elevated);
+  --color-pablo-border: var(--color-border-secon);
+
+  --color-blackSabath-700: var(--color-back-elevated);
+  --color-blackSabath-800: var(--color-back-secondary);
+  --color-blackSabath-900: var(--color-back-primary);
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-back-primary text-text-primary font-sans antialiased;
+  }
+}

@@ -1,0 +1,59 @@
+networks:
+  network2:
+
+services:
+  nginx:
+    build:
+      context: ./client
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+    networks:
+      - network2
+
+  php:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend/src:/var/www/src
+      - ./backend/public:/var/www/public_html
+      - ./backend/migrate.php:/var/www/migrate.php
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_TTL: ${JWT_TTL:-86400}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - network2
+
+  postgres:
+    image: postgres:16
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./backend/postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d php_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - network2
+
+  adminer:
+    image: adminer
+    ports:
+      - "1500:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - network2
