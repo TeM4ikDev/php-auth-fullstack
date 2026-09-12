@@ -72,11 +72,11 @@ header('X-RateLimit-Remaining: ' . $rate['remaining']);
 
 if (!$rate['allowed']) {
     header('Retry-After: ' . $rate['retryAfter']);
-    $send(429, ['error' => 'Слишком много запросов, попробуйте позже']);
+    $send(429, ['error' => 'Too fast']);
 }
 
 if (!isset($routes[$path])) {
-    $send(404, ['error' => 'Маршрут не найден', 'path' => $path]);
+    $send(404, ['error' => 'Route not found', 'path' => $path]);
 }
 
 if (!isset($routes[$path][$method])) {
@@ -90,5 +90,5 @@ try {
 } catch (InvalidArgumentException $e) {
     $send(422, ['error' => $e->getMessage()]);
 } catch (Throwable $e) {
-    $send(500, ['error' => 'Внутренняя ошибка сервера']);
+    $send(500, ['error' => 'Server error']);
 }
