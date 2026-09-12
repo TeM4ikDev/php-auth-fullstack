@@ -31,15 +31,18 @@ final class Config
             return self::parseDatabaseUrl($url);
         }
 
+        // Имена совпадают с POSTGRES_* из compose.yaml — один и тот же .env
+        // задаёт пароль и для контейнера, и для локального composer serve,
+        // без отдельной копии в DATABASE_URL.
         return [
             'dsn' => sprintf(
                 'pgsql:host=%s;port=%s;dbname=%s',
                 self::get('DB_HOST', 'localhost'),
-                self::get('DB_PORT', '5432'),
-                self::get('DB_NAME', 'php_auth')
+                self::get('DB_PORT', '55432'),
+                self::get('POSTGRES_DB', 'php_auth')
             ),
-            'user' => self::get('DB_USER', 'postgres'),
-            'password' => self::get('DB_PASSWORD', 'postgres'),
+            'user' => self::get('POSTGRES_USER', 'postgres'),
+            'password' => self::get('POSTGRES_PASSWORD', ''),
         ];
     }
 
@@ -93,7 +96,9 @@ final class Config
         }
 
         self::$env = [];
-        $path = \dirname(__DIR__, 2) . '/.env';
+        // На уровень выше backend/ — .env один на весь репозиторий,
+        // тот же файл читает docker compose для подстановки ${...}.
+        $path = \dirname(__DIR__, 3) . '/.env';
 
         if (!is_readable($path)) {
             return self::$env;
