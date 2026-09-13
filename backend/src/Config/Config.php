@@ -31,9 +31,6 @@ final class Config
             return self::parseDatabaseUrl($url);
         }
 
-        // Имена совпадают с POSTGRES_* из compose.yaml — один и тот же .env
-        // задаёт пароль и для контейнера, и для локального composer serve,
-        // без отдельной копии в DATABASE_URL.
         return [
             'dsn' => sprintf(
                 'pgsql:host=%s;port=%s;dbname=%s',
@@ -61,7 +58,7 @@ final class Config
         $parts = parse_url($url);
 
         if ($parts === false || !isset($parts['host'])) {
-            throw new RuntimeException('DATABASE_URL не разобрать: ожидается postgresql://user:pass@host:port/db');
+            throw new RuntimeException('DATABASE_URL ');
         }
 
         $scheme = strtolower($parts['scheme'] ?? 'pgsql');
@@ -96,8 +93,6 @@ final class Config
         }
 
         self::$env = [];
-        // На уровень выше backend/ — .env один на весь репозиторий,
-        // тот же файл читает docker compose для подстановки ${...}.
         $path = \dirname(__DIR__, 3) . '/.env';
 
         if (!is_readable($path)) {

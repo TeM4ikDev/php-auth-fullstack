@@ -36,25 +36,16 @@ final class JwtService
 
         [$header, $body, $signature] = $parts;
 
-        if (!hash_equals($this->sign($header . '.' . $body), $signature)) {
-            return null;
-        }
+        if (!hash_equals($this->sign($header . '.' . $body), $signature)) return null;
 
         $decodedHeader = json_decode($this->base64UrlDecode($header), true);
-
-        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== self::ALGORITHM) {
-            return null;
-        }
+        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== self::ALGORITHM) return null;
 
         $payload = json_decode($this->base64UrlDecode($body), true);
 
-        if (!is_array($payload)) {
-            return null;
-        }
+        if (!is_array($payload)) return null;
+        if (isset($payload['exp']) && time() >= (int) $payload['exp']) return null;
 
-        if (isset($payload['exp']) && time() >= (int) $payload['exp']) {
-            return null;
-        }
 
         return $payload;
     }

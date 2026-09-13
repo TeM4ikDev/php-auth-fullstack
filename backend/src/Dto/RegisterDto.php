@@ -27,13 +27,9 @@ final class RegisterDto
         $email = is_string($data['email'] ?? null) ? trim($data['email']) : '';
         $password = is_string($data['password'] ?? null) ? $data['password'] : '';
 
-        if ($name === '') {
-            throw new InvalidArgumentException('Write a name');
-        }
+        if ($name === '') throw new InvalidArgumentException('Write a name');
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) throw new InvalidArgumentException('invalid email');
 
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            throw new InvalidArgumentException('invalid email');
-        }
 
         if (strlen($password) < self::MIN_PASSWORD_LENGTH) {
             throw new InvalidArgumentException(

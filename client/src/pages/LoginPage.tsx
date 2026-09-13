@@ -10,6 +10,7 @@ import { observer } from "mobx-react-lite";
 import { useState, type FormEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {RegistrationGoogleButton} from "@/components/authButtons/googleButton/googleButton.tsx";
 
 export const LoginPage = observer(() => {
     const { userStore } = useStore();
@@ -62,6 +63,7 @@ export const LoginPage = observer(() => {
                         disabled={!email.trim() || !password}
                     />
                 </form>
+
 
                 <p className="text-center text-sm text-text-secondary">
                     Нет аккаунта?{" "}

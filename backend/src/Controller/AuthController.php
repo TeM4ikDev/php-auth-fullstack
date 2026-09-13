@@ -55,7 +55,7 @@ final class AuthController
             $user = $this->middleware->user();
 
             if ($user === null) {
-                return $this->error('Требуется авторизация', 401);
+                return $this->error('need a auth', 401);
             }
 
             return ['status' => 200, 'body' => $this->auth()->publicUser($user)];
@@ -98,6 +98,6 @@ final class AuthController
 
         error_log((string) $e);
 
-        return $this->error('Внутренняя ошибка сервера', 500);
+        return $this->error('Server error', 500);
     }
 }

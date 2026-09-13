@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-/**
- * Файловый rate-limiter с фиксированным окном. Без Redis/APCu — flock даёт
- * атомарность между воркерами php-fpm одного контейнера. Хранилище во
- * временной папке, сбрасывается при рестарте контейнера — для одного
- * инстанса этого достаточно, для горизонтального масштабирования нет.
- */
 final class RateLimiterService
 {
     private $dir;
@@ -23,16 +17,13 @@ final class RateLimiterService
         }
     }
 
-    /**
-     * @return array{allowed: bool, remaining: int, retryAfter: int}
-     */
+
     public function hit(string $key, int $limit, int $windowSeconds): array
     {
         $path = $this->dir . '/' . hash('sha256', $key) . '.json';
         $handle = @fopen($path, 'c+');
 
         if ($handle === false) {
-            // хранилище недоступно — не роняем запрос из-за инфраструктурной проблемы
             return ['allowed' => true, 'remaining' => $limit, 'retryAfter' => 0];
         }
 

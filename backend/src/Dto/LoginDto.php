@@ -23,9 +23,7 @@ final class LoginDto
         $email = is_string($data['email'] ?? null) ? trim($data['email']) : '';
         $password = is_string($data['password'] ?? null) ? $data['password'] : '';
 
-        if ($email === '' || $password === '') {
-            throw new InvalidArgumentException('Please provide a valid email address');
-        }
+        if ($email === '' || $password === '') throw new InvalidArgumentException('Please provide a valid email address or password');
 
         return new self(strtolower($email), $password);
     }

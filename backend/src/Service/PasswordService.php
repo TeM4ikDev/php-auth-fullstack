@@ -16,8 +16,4 @@ final class PasswordService
         return password_verify($password, $hash);
     }
 
-    public function needsRehash(string $hash): bool
-    {
-        return password_needs_rehash($hash, PASSWORD_DEFAULT);
-    }
 }

@@ -81,7 +81,7 @@ if (!isset($routes[$path])) {
 
 if (!isset($routes[$path][$method])) {
     header('Allow: ' . implode(', ', array_keys($routes[$path])));
-    $send(405, ['error' => 'Метод не поддерживается']);
+    $send(405, ['error' => 'Method not found']);
 }
 
 try {

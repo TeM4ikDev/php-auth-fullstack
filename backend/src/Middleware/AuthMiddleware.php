@@ -22,15 +22,11 @@ final class AuthMiddleware
     {
         $token = $this->bearerToken();
 
-        if ($token === null) {
-            return null;
-        }
+        if ($token === null) return null;
 
         $payload = $this->jwt->decode($token);
 
-        if ($payload === null || !isset($payload['sub'])) {
-            return null;
-        }
+        if ($payload === null || !isset($payload['sub'])) return null;
 
         $auth = $this->auth ?? new AuthService();
 
