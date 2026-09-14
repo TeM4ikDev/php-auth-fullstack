@@ -5,7 +5,6 @@ React (Vite) + PHP за nginx, PostgreSQL, JWT-авторизация.
 ## Запуск через Docker
 
 ```bash
-cp .env.example .env   # подставить свои значения
 docker compose up -d --build
 docker compose exec php php /var/www/migrate.php
 ```
