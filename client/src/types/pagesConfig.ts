@@ -16,17 +16,17 @@ export interface Routes {
 }
 
 const routes = {
-    HOME: { path: '/', label: 'Главная', showInHeader: true, icon: HomeIcon },
-    LOGIN: { path: '/login', label: 'Вход' },
-    REGISTER: { path: '/register', label: 'Регистрация' },
-    PROFILE: { path: '/profile', label: 'Профиль', showInHeader: true, icon: UserIcon },
-    NOT_FOUND: { path: '/404', label: 'Страница не найдена', disabled: true },
+    HOME: { path: '/', label: 'Home', showInHeader: true, icon: HomeIcon },
+    LOGIN: { path: '/login', label: 'Sign in' },
+    REGISTER: { path: '/register', label: 'Sign up' },
+    PROFILE: { path: '/profile', label: 'Profile', showInHeader: true, icon: UserIcon },
+    NOT_FOUND: { path: '/404', label: 'Page not found', disabled: true },
 } satisfies Routes;
 
 export type RouteKey = keyof typeof routes;
 
-// Record<RouteKey, Route> вместо typeof routes: иначе каждый роут сужается
-// до своей литеральной формы и Object.values() теряет необязательные поля.
+// Record<RouteKey, Route> instead of typeof routes: otherwise every route narrows
+// to its own literal shape and Object.values() loses the optional fields.
 export const RoutesConfig: Record<RouteKey, Route> = routes;
 
 class ApiConfig {

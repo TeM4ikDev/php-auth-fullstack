@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Горизонтальная прокрутка перетаскиванием мышью.
- * Тач-устройства скроллят нативно, поэтому там хук ничего не делает.
+ * Horizontal scrolling by dragging with the mouse.
+ * Touch devices scroll natively, so the hook does nothing there.
  */
 export const useDragScroll = <T extends HTMLElement>() => {
     const ref = useRef<T>(null);
@@ -25,7 +25,7 @@ export const useDragScroll = <T extends HTMLElement>() => {
         const onPointerMove = (e: PointerEvent) => {
             if (!isDown) return;
             const delta = e.clientX - startX;
-            // курсор меняем только когда пользователь реально потащил
+            // only change the cursor once the user has actually dragged
             if (Math.abs(delta) > 3) el.style.cursor = "grabbing";
             el.scrollLeft = startScroll - delta;
         };

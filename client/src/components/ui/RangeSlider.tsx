@@ -9,7 +9,7 @@ export interface Range {
 interface RangeSliderProps {
     value: Range;
     onChange: (value: Range) => void;
-    /** границы шкалы, не путать с value.min / value.max */
+    /** scale bounds, not to be confused with value.min / value.max */
     lowerBound?: number;
     upperBound?: number;
     step?: number;
@@ -20,7 +20,7 @@ interface RangeSliderProps {
 
 type Thumb = "min" | "max";
 
-// ход ползунка сужен на его ширину, иначе на 0% и 100% половина круга торчит за блок
+// the thumb's travel is narrowed by its own width, otherwise at 0% and 100% half the circle sticks out past the block
 const THUMB_SIZE = 26;
 
 const clamp = (value: number, from: number, to: number) => Math.min(Math.max(value, from), to);
@@ -40,7 +40,7 @@ export const RangeSlider = ({
 
     const span = upperBound - lowerBound;
     const toPercent = (v: number) => ((v - lowerBound) / span) * 100;
-    // позиция центра ползунка внутри дорожки, ужатой на его ширину
+    // position of the thumb's center within the track, narrowed by its own width
     const toOffset = (v: number) =>
         `calc(${THUMB_SIZE / 2}px + (100% - ${THUMB_SIZE}px) * ${toPercent(v) / 100})`;
 
@@ -53,7 +53,7 @@ export const RangeSlider = ({
         return clamp(Math.round(raw / step) * step, lowerBound, upperBound);
     };
 
-    // ползунки не проходят друг сквозь друга
+    // thumbs cannot pass through each other
     const commit = (thumb: Thumb, next: number) => {
         if (thumb === "min") onChange({ min: Math.min(next, value.max), max: value.max });
         else onChange({ min: value.min, max: Math.max(next, value.min) });
@@ -75,7 +75,7 @@ export const RangeSlider = ({
         event.currentTarget.releasePointerCapture(event.pointerId);
     };
 
-    // тап по дорожке подтягивает ближайший ползунок
+    // tapping the track pulls the nearest thumb toward it
     const handleTrackPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
         if (disabled) return;
         const next = valueFromClientX(event.clientX);

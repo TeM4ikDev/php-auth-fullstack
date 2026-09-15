@@ -17,13 +17,13 @@ export interface BlockProps {
     smallTitle?: boolean;
     mediumTitle?: boolean;
     overflowHidden?: boolean;
-    /** проявить содержимое из тёмного фона при появлении блока */
+    /** fade content in from a dark overlay when the block appears */
     appear?: boolean;
     onClick?: () => void;
     disabled?: boolean;
 }
 
-/** длительность проявления в секундах */
+/** fade-in duration in seconds */
 const APPEAR_DURATION = 0.45;
 
 export const Block = React.memo(({
@@ -121,7 +121,7 @@ export const Block = React.memo(({
                         <button
                             onClick={() => handleCollapse(!isCollapsed)}
                             className="p-1 rounded-md hover:bg-pablo-cardLight transition-colors"
-                            aria-label={isCollapsed ? 'Развернуть блок' : 'Свернуть блок'}
+                            aria-label={isCollapsed ? 'Expand block' : 'Collapse block'}
                         >
                             <motion.div animate={{ rotate: isCollapsed ? 0 : 180 }} transition={{ duration: 0.2, ease: "easeInOut" }} style={{ willChange: 'transform' }}>
                                 <ChevronDown className="w-5 h-5" />

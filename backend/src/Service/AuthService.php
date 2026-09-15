@@ -4,98 +4,50 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Database\Database;
-use App\Database\Sql;
+use App\Dto\AuthResultDto;
+use App\Dto\CreateUserDto;
 use App\Dto\LoginDto;
 use App\Dto\RegisterDto;
-use PDO;
-use PDOException;
-use RuntimeException;
+use App\Dto\UserDto;
+use App\Repository\UserRepositoryInterface;
+use App\Service\Exception\InvalidCredentialsException;
 
 final class AuthService
 {
-    private $db;
-    private $password;
-    private $jwt;
-
-    public function __construct(?PDO $db = null, ?PasswordService $password = null, ?JwtService $jwt = null)
-    {
-        $this->db = $db ?? Database::connect();
-        $this->password = $password ?? new PasswordService();
-        $this->jwt = $jwt ?? new JwtService();
+    public function __construct(
+        private readonly UserRepositoryInterface $users,
+        private readonly PasswordService $password,
+        private readonly JwtService $jwt,
+    ) {
     }
 
-    public function register(RegisterDto $dto): array
+    public function register(RegisterDto $dto): AuthResultDto
     {
-        $statement = $this->db->prepare(Sql::INSERT_USER);
+        $user = $this->users->create(new CreateUserDto($dto->name, $dto->email, $this->password->hash($dto->password)));
 
-        try {
-            $statement->execute([
-                ':name' => $dto->name,
-                ':email' => $dto->email,
-                ':password_hash' => $this->password->hash($dto->password),
-                ':role' => 'USER',
-            ]);
-        } catch (PDOException $e) {
-            if (in_array($e->getCode(), ['23505', '23000'], true)) {
-                throw new RuntimeException('Email already used', 409, $e);
-            }
+        return $this->issueToken($user);
+    }
 
-            throw $e;
+    public function login(LoginDto $dto): AuthResultDto
+    {
+        $user = $this->users->findByEmail($dto->email);
+
+        if ($user === null || !$this->password->verify($dto->password, $user->passwordHash)) {
+            throw new InvalidCredentialsException();
         }
 
-        $user = $this->findByEmail($dto->email);
-
-        if ($user === null) throw new RuntimeException('Error', 500);
-
-        return $this->authResponse($user);
+        return $this->issueToken($user);
     }
 
-    public function login(LoginDto $dto): array
+    public function findById(int $id): ?UserDto
     {
-        $user = $this->findByEmail($dto->email);
-
-        if ($user === null || !$this->password->verify($dto->password, $user['password_hash'])) {
-            throw new RuntimeException('Incorrect email or password', 401);
-        }
-
-        return $this->authResponse($user);
+        return $this->users->findById($id);
     }
 
-    public function findById(int $id): ?array
+    private function issueToken(UserDto $user): AuthResultDto
     {
-        $statement = $this->db->prepare(Sql::FIND_USER_BY_ID);
-        $statement->execute([':id' => $id]);
-        $user = $statement->fetch();
+        $token = $this->jwt->encode(['sub' => $user->id, 'email' => $user->email]);
 
-        return is_array($user) ? $user : null;
-    }
-
-    public function findByEmail(string $email): ?array
-    {
-        $statement = $this->db->prepare(Sql::FIND_USER_BY_EMAIL);
-        $statement->execute([':email' => $email]);
-        $user = $statement->fetch();
-
-        return is_array($user) ? $user : null;
-    }
-
-    public function publicUser(array $user): array
-    {
-        return [
-            'id' => (string) $user['id'],
-            'name' => $user['name'],
-            'email' => $user['email'],
-            'role' => $user['role'],
-            'createdAt' => $user['created_at'] ?? null,
-        ];
-    }
-
-    private function authResponse(array $user): array
-    {
-        return [
-            'token' => $this->jwt->encode(['sub' => (int) $user['id'], 'email' => $user['email']]),
-            'user' => $this->publicUser($user),
-        ];
+        return new AuthResultDto($token, $user);
     }
 }

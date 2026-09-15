@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Config\Config;
+use App\Config\JwtConfig;
 
 final class JwtService
 {
-    private const ALGORITHM = 'HS256';
+    public function __construct(private readonly JwtConfig $config)
+    {
+    }
 
     public function encode(array $claims): string
     {
@@ -16,10 +18,10 @@ final class JwtService
 
         $payload = array_merge($claims, [
             'iat' => $issuedAt,
-            'exp' => $issuedAt + Config::jwtTtl(),
+            'exp' => $issuedAt + $this->config->ttlSeconds,
         ]);
 
-        $header = $this->base64UrlEncode($this->json(['alg' => self::ALGORITHM, 'typ' => 'JWT']));
+        $header = $this->base64UrlEncode($this->json(['alg' => $this->config->algorithm, 'typ' => 'JWT']));
         $body = $this->base64UrlEncode($this->json($payload));
         $signature = $this->sign($header . '.' . $body);
 
@@ -36,23 +38,32 @@ final class JwtService
 
         [$header, $body, $signature] = $parts;
 
-        if (!hash_equals($this->sign($header . '.' . $body), $signature)) return null;
+        if (!hash_equals($this->sign($header . '.' . $body), $signature)) {
+            return null;
+        }
 
         $decodedHeader = json_decode($this->base64UrlDecode($header), true);
-        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== self::ALGORITHM) return null;
+
+        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== $this->config->algorithm) {
+            return null;
+        }
 
         $payload = json_decode($this->base64UrlDecode($body), true);
 
-        if (!is_array($payload)) return null;
-        if (isset($payload['exp']) && time() >= (int) $payload['exp']) return null;
+        if (!is_array($payload)) {
+            return null;
+        }
 
+        if (isset($payload['exp']) && time() >= (int) $payload['exp']) {
+            return null;
+        }
 
         return $payload;
     }
 
     private function sign(string $data): string
     {
-        return $this->base64UrlEncode(hash_hmac('sha256', $data, Config::jwtSecret(), true));
+        return $this->base64UrlEncode(hash_hmac('sha256', $data, $this->config->secret, true));
     }
 
     private function json(array $data): string

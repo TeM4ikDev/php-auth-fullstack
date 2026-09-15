@@ -4,12 +4,12 @@ import { useMemo, useState } from "react";
 
 export type SelectOption = { value: string; label: string; image?: string };
 
-// Сколько строк рендерим за раз — без этого лимита список из тысяч опций
-// (например, объединение моделей/символов по всем коллекциям без выбранного подарка)
-// синхронно создаёт тысячи DOM-узлов и подвешивает вкладку на клике открытия.
+// How many rows we render at once — without this cap, a list of thousands of options
+// (e.g. combining models/symbols across all collections with no gift selected)
+// synchronously creates thousands of DOM nodes and freezes the tab on open.
 const MAX_VISIBLE_OPTIONS = 150;
 
-/** Выпадающий список с поиском, одиночный выбор. Открытое состояние управляется извне (чтобы прятать другие поля). */
+/** Searchable dropdown, single select. Open state is controlled externally (to hide other fields). */
 export function SearchableSelect({
     placeholder, value, options, onChange, withImages, invert, open, onOpenChange, disabled,
 }: {
@@ -66,7 +66,7 @@ export function SearchableSelect({
                             <input
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Поиск…"
+                                placeholder="Search…"
                                 className="w-full bg-transparent outline-none text-sm text-white placeholder-gray-500"
                             />
                         </div>
@@ -77,7 +77,7 @@ export function SearchableSelect({
                             onClick={() => pick(null)}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-pablo-cardLight"
                         >
-                            Любой
+                            Any
                         </button>
                         {filtered.map((o) => (
                             <button
@@ -90,9 +90,9 @@ export function SearchableSelect({
                                 {o.label}
                             </button>
                         ))}
-                        {!filtered.length && <p className="px-4 py-3 text-sm text-gray-500">Ничего не найдено</p>}
+                        {!filtered.length && <p className="px-4 py-3 text-sm text-gray-500">Nothing found</p>}
                         {hiddenCount > 0 && (
-                            <p className="px-4 py-2 text-xs text-gray-500">Ещё {hiddenCount} — уточните поиск</p>
+                            <p className="px-4 py-2 text-xs text-gray-500">{hiddenCount} more — refine your search</p>
                         )}
                     </div>
                 </div>
@@ -101,7 +101,7 @@ export function SearchableSelect({
     );
 }
 
-/** Выпадающий список с поиском, множественный выбор (чекбоксы, "Любой" = пустой массив). */
+/** Searchable dropdown, multi select (checkboxes, "Any" = empty array). */
 export function MultiSearchableSelect({
     placeholder, values, options, onChange, withImages, invert, open, onOpenChange, disabled,
 }: {
@@ -168,7 +168,7 @@ export function MultiSearchableSelect({
                             <input
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Поиск…"
+                                placeholder="Search…"
                                 className="w-full bg-transparent outline-none text-sm text-white placeholder-gray-500"
                             />
                         </div>
@@ -179,7 +179,7 @@ export function MultiSearchableSelect({
                             onClick={clear}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-pablo-cardLight"
                         >
-                            Любой (сбросить выбор)
+                            Any (clear selection)
                         </button>
                         {filtered.map((o) => {
                             const checked = values.includes(o.value);
@@ -201,9 +201,9 @@ export function MultiSearchableSelect({
                                 </button>
                             );
                         })}
-                        {!filtered.length && <p className="px-4 py-3 text-sm text-gray-500">Ничего не найдено</p>}
+                        {!filtered.length && <p className="px-4 py-3 text-sm text-gray-500">Nothing found</p>}
                         {hiddenCount > 0 && (
-                            <p className="px-4 py-2 text-xs text-gray-500">Ещё {hiddenCount} — уточните поиск</p>
+                            <p className="px-4 py-2 text-xs text-gray-500">{hiddenCount} more — refine your search</p>
                         )}
                     </div>
                 </div>

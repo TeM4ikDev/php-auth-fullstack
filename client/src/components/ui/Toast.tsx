@@ -12,8 +12,8 @@ const TONES: Record<ToastTone, { Icon: typeof CircleCheck; color: string }> = {
 };
 
 /**
- * Содержимое всплывающего сообщения. Тёмную подложку и анимацию даёт ToastContainer
- * из main.tsx, здесь только иконка и текст — поэтому вид у всех сообщений один.
+ * Content of the popup message. The dark backdrop and animation come from ToastContainer
+ * in main.tsx — this is just the icon and text, so every message looks the same.
  */
 const ToastMessage = ({ tone, text }: { tone: ToastTone; text: ReactNode }) => {
     const { Icon, color } = TONES[tone];
@@ -27,8 +27,8 @@ const ToastMessage = ({ tone, text }: { tone: ToastTone; text: ReactNode }) => {
 };
 
 /**
- * Показать сообщение. Живёт вне роутера, поэтому переживает переход между страницами:
- * можно вызвать перед navigate и не передавать флаг через state маршрута.
+ * Show a message. Lives outside the router, so it survives page transitions:
+ * it can be called before navigate() without passing a flag through route state.
  */
 export const showToast = (text: ReactNode, tone: ToastTone = "success", options?: ToastOptions) =>
     toast(<ToastMessage tone={tone} text={text} />, options);

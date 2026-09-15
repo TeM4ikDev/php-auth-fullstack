@@ -14,10 +14,10 @@ interface NotFoundPageProps {
 }
 
 const NotFound: React.FC<NotFoundPageProps> = ({
-    title = "Страница не найдена",
-    description = "Извините, но страница, которую вы ищете, не существует или была перемещена.",
+    title = "Page not found",
+    description = "Sorry, the page you're looking for doesn't exist or has been moved.",
     showButton = true,
-    buttonText = "Вернуться на главную",
+    buttonText = "Back to home",
     buttonRouteKey = "HOME",
     className = "",
 }) => {

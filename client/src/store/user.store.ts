@@ -31,7 +31,7 @@ class UserStore {
             const user = await UserService.getMe();
             runInAction(() => this.login(user));
         } catch (error) {
-            console.error("Ошибка при получении профиля:", error);
+            console.error("Failed to fetch profile:", error);
             runInAction(() => this.logout());
         }
     };

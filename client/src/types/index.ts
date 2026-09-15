@@ -1,5 +1,5 @@
-// Объект вместо enum: шаблон Vite включает erasableSyntaxOnly, где enum запрещён.
-// Использование не меняется — UserRoles.Admin как значение, UserRoles как тип.
+// Object instead of enum: the Vite template enables erasableSyntaxOnly, which forbids enum.
+// Usage stays the same — UserRoles.Admin as a value, UserRoles as a type.
 export const UserRoles = {
     Admin: 'ADMIN',
     User: 'USER',
@@ -7,7 +7,7 @@ export const UserRoles = {
 
 export type UserRoles = (typeof UserRoles)[keyof typeof UserRoles];
 
-/** Гасит ошибку запроса и отдаёт null — чтобы вызывающий код не оборачивал всё в try/catch. */
+/** Swallows a request error and returns null so the caller doesn't need its own try/catch. */
 export async function onRequest<T>(request: Promise<T>): Promise<T | null> {
     try {
         return await request;

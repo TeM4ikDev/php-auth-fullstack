@@ -73,7 +73,7 @@ export const Input = ({
             type="button"
             onClick={onClear}
             className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-text-secondary hover:text-text-primary"
-            title="Очистить"
+            title="Clear"
           >
             <X className="h-4 w-4" />
           </button>

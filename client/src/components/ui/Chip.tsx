@@ -6,15 +6,15 @@ import { type ReactNode } from "react";
 interface ChipProps {
     text: ReactNode;
     onClick?: () => void;
-    /** chevron справа — чип открывает список или шторку */
+    /** chevron on the right — chip opens a list or a sheet */
     chevron?: boolean;
-    /** картинка слева: url или готовый узел (например, цветной кружок фона) */
+    /** image on the left: a url or a ready-made node (e.g. a colored dot) */
     image?: string | ReactNode;
-    /** крестик справа — чип снимает выбор */
+    /** cross on the right — chip clears the selection */
     onRemove?: () => void;
     active?: boolean;
     disabled?: boolean;
-    /** m — обычный чип-фильтр, s — компактный (пресеты внутри карточек) */
+    /** m — regular filter chip, s — compact (presets inside cards) */
     size?: "s" | "m";
     className?: string;
 }
@@ -49,7 +49,7 @@ export const Chip = ({
         className
     );
 
-    // с крестиком чип состоит из двух кликабельных зон, поэтому не может быть одной кнопкой
+    // with a cross, the chip is two clickable zones, so it can't be a single button
     if (onRemove) {
         return (
             <span className={cn(shell, "justify-center")}>
@@ -65,7 +65,7 @@ export const Chip = ({
                     type="button"
                     onClick={onRemove}
                     disabled={disabled}
-                    aria-label="Убрать"
+                    aria-label="Remove"
                     className="flex shrink-0 items-center justify-center rounded-xl p-[9px] text-text-primary transition-opacity hover:opacity-70"
                 >
                     <X className="h-[18px] w-[18px]" />
@@ -87,7 +87,7 @@ export const Chip = ({
 };
 
 export const ChipGroup = ({ children, className }: { children: ReactNode; className?: string }) => {
-    // ряд чипов почти всегда шире экрана, поэтому сразу учим его листаться мышью
+    // a row of chips is almost always wider than the screen, so teach it to scroll with the mouse
     const ref = useDragScroll<HTMLDivElement>();
 
     return (

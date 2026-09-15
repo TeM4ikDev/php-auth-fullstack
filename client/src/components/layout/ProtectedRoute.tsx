@@ -16,10 +16,10 @@ export const ProtectedRoute = observer(({ children, allowedRoles }: Props) => {
     const { userStore: { isLoading, userRole } } = useStore();
     const allowed = !!userRole && allowedRoles.includes(userRole);
 
-    // тост в эффекте, а не в теле рендера: иначе StrictMode покажет его дважды
+    // Toast in an effect, not in the render body — otherwise StrictMode shows it twice
     useEffect(() => {
         if (!isLoading && !allowed) {
-            toast.error('Недостаточно прав');
+            toast.error('Insufficient permissions');
         }
     }, [isLoading, allowed]);
 
@@ -28,7 +28,7 @@ export const ProtectedRoute = observer(({ children, allowedRoles }: Props) => {
     }
 
     if (!allowed) {
-        // когда появится страница входа — редирект сюда сменить на RoutesConfig.LOGIN.path
+        // Once a sign-in page exists, change this redirect to RoutesConfig.LOGIN.path
         return <Navigate to={RoutesConfig.HOME.path} replace />;
     }
 

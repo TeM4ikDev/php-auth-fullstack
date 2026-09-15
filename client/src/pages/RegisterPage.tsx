@@ -24,7 +24,7 @@ export const RegisterPage = observer(() => {
 
     const passwordError =
         password && password.length < MIN_PASSWORD_LENGTH
-            ? `Минимум ${MIN_PASSWORD_LENGTH} символов`
+            ? `At least ${MIN_PASSWORD_LENGTH} characters`
             : undefined;
 
     const canSubmit = !!name.trim() && !!email.trim() && !!password && !passwordError;
@@ -38,10 +38,10 @@ export const RegisterPage = observer(() => {
         try {
             await userStore.signUp({ name: name.trim(), email: email.trim(), password });
             navigate(RoutesConfig.PROFILE.path, { replace: true });
-            toast.success("Успешная регистарция!")
+            toast.success("Registered successfully!")
 
         } catch (error) {
-            toast.error(getErrorMessage(error, "Не удалось зарегистрироваться"));
+            toast.error(getErrorMessage(error, "Failed to register"));
         } finally {
             setLoading(false);
         }
@@ -49,11 +49,11 @@ export const RegisterPage = observer(() => {
 
     return (
         <PageContainer>
-            <Block className="max-w-110! w-full p-5 gap-5" icons={[<UserPlus />]} title="Регистация">
+            <Block className="max-w-110! w-full p-5 gap-5" icons={[<UserPlus />]} title="Sign up">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <Input
                         name="name"
-                        placeholder="Имя"
+                        placeholder="Name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         isRequired
@@ -61,7 +61,7 @@ export const RegisterPage = observer(() => {
                     <Input
                         type="email"
                         name="email"
-                        placeholder="Почта"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         isRequired
@@ -69,20 +69,20 @@ export const RegisterPage = observer(() => {
                     <Input
                         type="password"
                         name="password"
-                        placeholder="Пароль"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         error={passwordError}
                         isRequired
                     />
 
-                    <Button text="Зарегистрироваться" formSubmit loading={loading} disabled={!canSubmit} />
+                    <Button text="Sign up" formSubmit loading={loading} disabled={!canSubmit} />
                 </form>
 
                 <p className="text-center text-sm text-text-secondary">
-                    Уже есть аккаунт?{" "}
+                    Already have an account?{" "}
                     <NavLink to={RoutesConfig.LOGIN.path} className="text-brand-500">
-                        Войти
+                        Sign in
                     </NavLink>
                 </p>
             </Block>

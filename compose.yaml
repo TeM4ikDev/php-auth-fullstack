@@ -17,6 +17,9 @@ services:
       context: ./backend
     volumes:
       - ./backend/src:/var/www/src
+      - ./backend/config:/var/www/config
+      - ./backend/routes:/var/www/routes
+      - ./backend/database:/var/www/database
       - ./backend/public:/var/www/public_html
       - ./backend/migrate.php:/var/www/migrate.php
     environment:
@@ -32,7 +35,7 @@ services:
   postgres:
     image: postgres:16
     ports:
-      - "55432:5432"
+      - "45432:5432"
     volumes:
       - ./backend/postgres-data:/var/lib/postgresql/data
     environment:

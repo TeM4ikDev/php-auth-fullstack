@@ -82,13 +82,13 @@ export const Modal = memo(function Modal({ title, description, children, buttonF
                     onClick={close}
                     onPointerDown={(e) => e.stopPropagation()}
                     className="absolute right-4 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-back-alpha-xs text-white/60 transition-colors hover:text-white"
-                    aria-label="Закрыть"
+                    aria-label="Close"
                   >
                     <X className="h-[1.125rem] w-[1.125rem]" strokeWidth={2.5} />
                   </button>
                 </div>
 
-                {/* min-h-0 обязателен: без него flex-ребёнок не сжимается ниже своего контента и скролл не включается */}
+                {/* min-h-0 is required: without it a flex child won't shrink below its content and scroll won't kick in */}
                 <div className='flex min-h-0 flex-1 flex-col gap-2 px-4'>
                   {(title || description) && (
                     <div className="flex shrink-0 flex-col gap-2.5">

@@ -6,98 +6,47 @@ namespace App\Controller;
 
 use App\Dto\LoginDto;
 use App\Dto\RegisterDto;
-use App\Middleware\AuthMiddleware;
+use App\Dto\UserDto;
+use App\Http\Request;
+use App\Http\Response;
+use App\Http\ResponseFactory;
+use App\Resource\AuthResource;
+use App\Resource\UserResource;
 use App\Service\AuthService;
-use InvalidArgumentException;
 use RuntimeException;
-use Throwable;
 
 final class AuthController
 {
-    private $auth;
-    private $middleware;
-
-    public function __construct(?AuthService $auth = null, ?AuthMiddleware $middleware = null)
-    {
-        $this->auth = $auth;
-        $this->middleware = $middleware ?? new AuthMiddleware();
+    public function __construct(
+        private readonly AuthService $auth,
+        private readonly ResponseFactory $response,
+    ) {
     }
 
-    public function register(): array
+    public function register(Request $request): Response
     {
-        try {
-            $dto = RegisterDto::fromArray($this->body());
+        $dto = RegisterDto::fromArray($request->json());
+        $result = $this->auth->register($dto);
 
-            return ['status' => 201, 'body' => $this->auth()->register($dto)];
-        } catch (InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), 422);
-        } catch (Throwable $e) {
-            return $this->fail($e);
-        }
+        return $this->response->created(AuthResource::fromDto($result));
     }
 
-    public function login(): array
+    public function login(Request $request): Response
     {
-        try {
-            $dto = LoginDto::fromArray($this->body());
+        $dto = LoginDto::fromArray($request->json());
+        $result = $this->auth->login($dto);
 
-            return ['status' => 200, 'body' => $this->auth()->login($dto)];
-        } catch (InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), 422);
-        } catch (Throwable $e) {
-            return $this->fail($e);
-        }
+        return $this->response->ok(AuthResource::fromDto($result));
     }
 
-    public function me(): array
+    public function me(Request $request): Response
     {
-        try {
-            $user = $this->middleware->user();
+        $user = $request->attribute('user');
 
-            if ($user === null) {
-                return $this->error('need a auth', 401);
-            }
-
-            return ['status' => 200, 'body' => $this->auth()->publicUser($user)];
-        } catch (Throwable $e) {
-            return $this->fail($e);
-        }
-    }
-
-    private function auth(): AuthService
-    {
-        if ($this->auth === null) {
-            $this->auth = new AuthService();
+        if (!$user instanceof UserDto) {
+            throw new RuntimeException('Route is missing AuthMiddleware.');
         }
 
-        return $this->auth;
-    }
-
-    private function body(): array
-    {
-        $raw = file_get_contents('php://input');
-        $data = json_decode(is_string($raw) ? $raw : '', true);
-
-        return is_array($data) ? $data : [];
-    }
-
-    private function error(string $message, int $status): array
-    {
-        return ['status' => $status, 'body' => ['error' => $message]];
-    }
-
-    private function fail(Throwable $e): array
-    {
-        if ($e instanceof RuntimeException) {
-            $code = (int) $e->getCode();
-
-            if ($code >= 400 && $code < 600) {
-                return $this->error($e->getMessage(), $code);
-            }
-        }
-
-        error_log((string) $e);
-
-        return $this->error('Server error', 500);
+        return $this->response->ok(UserResource::fromDto($user));
     }
 }

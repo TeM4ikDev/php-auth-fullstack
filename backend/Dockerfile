@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.5-fpm
 LABEL authors="Artem"
 
 RUN apt-get update \
@@ -15,6 +15,9 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --no-autoloader
 
 COPY src ./src
+COPY config ./config
+COPY routes ./routes
+COPY database ./database
 COPY public ./public_html
 COPY migrate.php ./
 

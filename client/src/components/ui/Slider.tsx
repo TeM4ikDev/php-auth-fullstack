@@ -10,15 +10,15 @@ interface SliderProps {
     label?: string;
     disabled?: boolean;
     className?: string;
-    /** Задержка перед вызовом onChange после того, как пользователь перестал двигать ползунок (мс). */
+    /** Delay before calling onChange after the user stops dragging the thumb (ms). */
     debounceMs?: number;
 }
 
 export function Slider({
     value, onChange, min = 0, max = 100, step = 1, label, disabled = false, className, debounceMs = 400,
 }: SliderProps) {
-    // локальное значение — двигается мгновенно, чтобы ползунок не лагал;
-    // наружу (onChange -> запрос к бэку) отдаём с задержкой после остановки
+    // local value — moves instantly so the thumb doesn't lag;
+    // the outer onChange (-> request to the backend) fires with a delay after it stops
     const [localValue, setLocalValue] = useState(value);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

@@ -4,27 +4,37 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use RuntimeException;
+
 final class RateLimiterService
 {
-    private $dir;
+    private readonly string $directory;
 
-    public function __construct(?string $dir = null)
+    public function __construct(?string $directory = null)
     {
-        $this->dir = $dir ?? sys_get_temp_dir() . '/rate-limit';
+        $this->directory = $directory ?? sys_get_temp_dir() . '/rate-limit';
 
-        if (!is_dir($this->dir)) {
-            @mkdir($this->dir, 0777, true);
+        if (!is_dir($this->directory) && !mkdir($this->directory, 0777, true) && !is_dir($this->directory)) {
+            throw new RuntimeException("Could not create rate limit directory [{$this->directory}].");
         }
     }
 
-
-    public function hit(string $key, int $limit, int $windowSeconds): array
+    public function hit(string $key, int $limit, int $windowSeconds): RateLimitResult
     {
-        $path = $this->dir . '/' . hash('sha256', $key) . '.json';
-        $handle = @fopen($path, 'c+');
+        $path = $this->directory . '/' . hash('sha256', $key) . '.json';
+
+        if (!is_writable($this->directory)) {
+            error_log("Rate limiter: directory [{$this->directory}] is not writable, failing open.");
+
+            return new RateLimitResult(true, $limit, 0);
+        }
+
+        $handle = fopen($path, 'c+');
 
         if ($handle === false) {
-            return ['allowed' => true, 'remaining' => $limit, 'retryAfter' => 0];
+            error_log("Rate limiter: could not open lock file [{$path}], failing open.");
+
+            return new RateLimitResult(true, $limit, 0);
         }
 
         flock($handle, LOCK_EX);
@@ -41,7 +51,7 @@ final class RateLimiterService
 
         rewind($handle);
         ftruncate($handle, 0);
-        fwrite($handle, json_encode($state));
+        fwrite($handle, (string) json_encode($state));
         fflush($handle);
         flock($handle, LOCK_UN);
         fclose($handle);
@@ -49,10 +59,6 @@ final class RateLimiterService
         $allowed = $state['count'] <= $limit;
         $retryAfter = max(0, $windowSeconds - ($now - $state['windowStart']));
 
-        return [
-            'allowed' => $allowed,
-            'remaining' => max(0, $limit - $state['count']),
-            'retryAfter' => $retryAfter,
-        ];
+        return new RateLimitResult($allowed, max(0, $limit - $state['count']), $retryAfter);
     }
 }

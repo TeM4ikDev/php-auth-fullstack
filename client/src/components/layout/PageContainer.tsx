@@ -25,15 +25,15 @@ export const PageContainer: React.FC<PageContainerProps> = ({ title, children, c
     if (needAuth && !user && !isLoading) {
         return (
             <PageContainer itemsStart>
-                <Block  
-                    title="Вы не авторизованы"
+                <Block
+                    title="You are not signed in"
                     icons={[<LogOut />]}
                     className="!max-w-[500px] mt-10 p-5 gap-5"
                     variant="darker"
                     titleCenter
                     mediumTitle
                 >
-                    <Button text="На главную" routeKey="HOME" />
+                    <Button text="Go home" routeKey="HOME" />
                 </Block>
             </PageContainer>
         )

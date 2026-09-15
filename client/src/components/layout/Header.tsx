@@ -23,7 +23,7 @@ const HeaderSkeleton = () => (
             <Skeleton className="h-10 w-24 rounded-xl"/>
         </div>
 
-        <span className="sr-only">Загрузка профиля</span>
+        <span className="sr-only">Loading profile</span>
     </div>
 );
 
@@ -35,7 +35,7 @@ export const Header = observer(() => {
     const handleLogout = () => {
         userStore.logout();
         navigate(RoutesConfig.LOGIN.path, {replace: true});
-        toast.success("Вы вышли")
+        toast.success("You have been logged out")
     };
 
     return (
@@ -46,7 +46,7 @@ export const Header = observer(() => {
                 <>
                     <ProfileHeader />
                     <Button
-                        text="Выйти"
+                        text="Log out"
                         color="gray"
                         widthMin
                         className="h-min"
@@ -56,8 +56,8 @@ export const Header = observer(() => {
                 </>
             ) : (
                 <div className="ml-auto flex items-center gap-2">
-                    <Button text="Войти" color="transparent" widthMin routeKey="LOGIN" />
-                    <Button text="Регистрация" widthMin routeKey="REGISTER" />
+                    <Button text="Sign in" color="transparent" widthMin routeKey="LOGIN" />
+                    <Button text="Sign up" widthMin routeKey="REGISTER" />
                 </div>
             )}
         </header>

@@ -10,7 +10,6 @@ import { observer } from "mobx-react-lite";
 import { useState, type FormEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import {RegistrationGoogleButton} from "@/components/authButtons/googleButton/googleButton.tsx";
 
 export const LoginPage = observer(() => {
     const { userStore } = useStore();
@@ -27,9 +26,9 @@ export const LoginPage = observer(() => {
         try {
             await userStore.signIn({ email: email.trim(), password });
             navigate(RoutesConfig.PROFILE.path, { replace: true });
-            toast.success("Успешный вход!")
+            toast.success("Signed in successfully!")
         } catch (error) {
-            toast.error(getErrorMessage(error, "Не удалось войти"));
+            toast.error(getErrorMessage(error, "Failed to sign in"));
         } finally {
             setLoading(false);
         }
@@ -37,12 +36,12 @@ export const LoginPage = observer(() => {
 
     return (
         <PageContainer>
-            <Block className="max-w-110! w-full p-5 gap-5" icons={[<LogIn />]} title="Вход">
+            <Block className="max-w-110! w-full p-5 gap-5" icons={[<LogIn />]} title="Sign in">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <Input
                         type="email"
                         name="email"
-                        placeholder="Почта"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         isRequired
@@ -50,14 +49,14 @@ export const LoginPage = observer(() => {
                     <Input
                         type="password"
                         name="password"
-                        placeholder="Пароль"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         isRequired
                     />
 
                     <Button
-                        text="Войти"
+                        text="Sign in"
                         formSubmit
                         loading={loading}
                         disabled={!email.trim() || !password}
@@ -66,9 +65,9 @@ export const LoginPage = observer(() => {
 
 
                 <p className="text-center text-sm text-text-secondary">
-                    Нет аккаунта?{" "}
+                    Don't have an account?{" "}
                     <NavLink to={RoutesConfig.REGISTER.path} className="text-brand-500">
-                        Зарегистрироваться
+                        Sign up
                     </NavLink>
                 </p>
             </Block>

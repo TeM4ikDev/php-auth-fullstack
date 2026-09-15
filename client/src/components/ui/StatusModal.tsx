@@ -8,13 +8,13 @@ export type StatusTone = "success" | "error" | "neutral";
 interface Props {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
-    /** neutral — без иконки: состояние ожидания */
+    /** neutral — no icon: pending state */
     tone?: StatusTone;
     title: string;
     description?: ReactNode;
-    /** доп. строка под описанием, например «Раз и навсегда · 120$» */
+    /** extra line under the description, e.g. "One-time · $120" */
     note?: ReactNode;
-    /** кнопки */
+    /** buttons */
     children?: ReactNode;
 }
 

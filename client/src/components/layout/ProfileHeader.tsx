@@ -5,7 +5,7 @@ import {NavLink} from "react-router-dom";
 
 export const ProfileHeader = observer(() => {
     const {userStore: {user }} = useStore();
-    const name = user?.name || "Пользователь";
+    const name = user?.name || "User";
 
 
 

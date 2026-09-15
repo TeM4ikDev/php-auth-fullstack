@@ -7,7 +7,7 @@ import { Button } from "./Button";
 
 export interface MonthValue {
     year: number;
-    /** 0 — январь, 11 — декабрь */
+    /** 0 — January, 11 — December */
     month: number;
 }
 
@@ -15,25 +15,25 @@ interface Props {
     isOpen: boolean;
     setIsOpen: (value: boolean) => void;
     value?: MonthValue | null;
-    /** null — сброс фильтра: приходит и от кнопки «Сбросить», и от повторного клика по выбранному месяцу */
+    /** null — clears the filter: comes both from the "Reset" button and from re-clicking the selected month */
     onSelect: (value: MonthValue | null) => void;
     minYear?: number;
     maxYear?: number;
 }
 
 export const MONTHS = [
-    "Январь",
-    "Февраль",
-    "Март",
-    "Апрель",
-    "Май",
-    "Июнь",
-    "Июль",
-    "Август",
-    "Сентябрь",
-    "Октябрь",
-    "Ноябрь",
-    "Декабрь",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ];
 
 export const MonthPickerModal = ({ isOpen, setIsOpen, value = null, onSelect, minYear, maxYear }: Props) => {
@@ -100,7 +100,7 @@ export const MonthPickerModal = ({ isOpen, setIsOpen, value = null, onSelect, mi
             </div>
             {/* </div> */}
 
-            {value && <Button color="gray" text="Сбросить" onClick={reset} />}
+            {value && <Button color="gray" text="Reset" onClick={reset} />}
         </Modal>
     );
 };
