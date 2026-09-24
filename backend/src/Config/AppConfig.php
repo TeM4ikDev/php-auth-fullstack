@@ -12,6 +12,7 @@ final class AppConfig
         public readonly int $rateLimitDefaultLimit,
         public readonly int $rateLimitStrictLimit,
         public readonly array $rateLimitStrictPaths,
+        public readonly string $clientUrl,
     ) {
     }
 
@@ -25,6 +26,7 @@ final class AppConfig
             60,
             5,
             ['/api/auth/login', '/api/auth/register'],
+            $config->get('CLIENT_URL', 'http://localhost:8081'),
         );
     }
 }

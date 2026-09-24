@@ -28,8 +28,9 @@ export const ProtectedRoute = observer(({ children, allowedRoles }: Props) => {
     }
 
     if (!allowed) {
-        // Once a sign-in page exists, change this redirect to RoutesConfig.LOGIN.path
-        return <Navigate to={RoutesConfig.HOME.path} replace />;
+        // An unauthenticated visitor is sent to sign in; a signed-in one without the
+        // required role goes home, since signing in again would not help.
+        return <Navigate to={userRole ? RoutesConfig.HOME.path : RoutesConfig.LOGIN.path} replace />;
     }
 
     return <>{children}</>;

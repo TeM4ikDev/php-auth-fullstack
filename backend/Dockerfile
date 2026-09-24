@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get install -y curl git libpq-dev unzip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo pdo_pgsql sockets
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -19,7 +19,7 @@ COPY config ./config
 COPY routes ./routes
 COPY database ./database
 COPY public ./public_html
-COPY migrate.php ./
+COPY migrate.php seed.php ./
 
 RUN composer dump-autoload --no-dev --optimize
 

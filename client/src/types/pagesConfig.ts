@@ -19,6 +19,7 @@ const routes = {
     HOME: { path: '/', label: 'Home', showInHeader: true, icon: HomeIcon },
     LOGIN: { path: '/login', label: 'Sign in' },
     REGISTER: { path: '/register', label: 'Sign up' },
+    VERIFY_EMAIL: { path: '/verify-email', label: 'Verify email' },
     PROFILE: { path: '/profile', label: 'Profile', showInHeader: true, icon: UserIcon },
     NOT_FOUND: { path: '/404', label: 'Page not found', disabled: true },
 } satisfies Routes;
@@ -34,12 +35,19 @@ class ApiConfig {
         baseInstance: createAxiosInstance('auth/'),
         login: "login",
         register: "register",
+        verifyEmail: "verify-email",
         profile: "profile",
     };
 
     users = {
         baseInstance: createAxiosInstance('users/'),
         me: 'me',
+    };
+
+    profile = {
+        baseInstance: createAxiosInstance(''),
+        root: 'profile',
+        password: 'profile/password',
     };
 }
 

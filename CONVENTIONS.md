@@ -152,6 +152,25 @@ final class UserResource
 }
 ```
 
+### 8. Исключения — в подпапке `Exception/` рядом со слоем
+
+Класс исключения лежит не рядом с обычными классами своего слоя, а в подпапке `Exception/`
+внутри него — так `Service/`, `Repository/`, `Http/` остаются коллекциями «рабочих» классов,
+а типы ошибок видно сразу по структуре папок.
+
+```
+// было бы (наивно) — WrongCurrentPasswordException.php прямо в src/Service/
+
+// стало — уже так в этом репозитории:
+src/Service/Exception/InvalidCredentialsException.php
+src/Service/Exception/WrongCurrentPasswordException.php
+src/Repository/Exception/EmailAlreadyTakenException.php
+src/Http/Exception/{ForbiddenException,NotFoundException,...}.php
+```
+
+Правило действует для каждого сервиса отдельно (свой `src/`, свои подпапки `Exception/`) —
+микросервисы не делят код, но делят конвенцию.
+
 ## Часть 2. Общие практики хорошего тона
 
 ### Архитектура и зависимости

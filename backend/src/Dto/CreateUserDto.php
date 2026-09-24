@@ -12,7 +12,9 @@ final class CreateUserDto
         public readonly string $name,
         public readonly string $email,
         public readonly string $passwordHash,
-        public readonly UserRole $role = UserRole::User,
+        public readonly string $emailVerificationToken,
+        public readonly ?string $phone = null,
+        public readonly UserRole $role = UserRole::Customer,
     ) {
     }
 }

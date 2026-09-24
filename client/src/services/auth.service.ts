@@ -15,8 +15,14 @@ class authService {
         return data;
     }
 
-    async register(payload: IRegisterPayload): Promise<IAuthResponse> {
-        const { data } = await this.instance.post<IAuthResponse>(this.baseUrl.register, payload);
+    // Регистрация больше не логинит — нужно сперва подтвердить email
+    async register(payload: IRegisterPayload): Promise<IUser> {
+        const { data } = await this.instance.post<IUser>(this.baseUrl.register, payload);
+        return data;
+    }
+
+    async verifyEmail(token: string): Promise<IUser> {
+        const { data } = await this.instance.post<IUser>(this.baseUrl.verifyEmail, { token });
         return data;
     }
 

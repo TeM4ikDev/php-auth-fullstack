@@ -1,6 +1,13 @@
 import { AuthService } from "@/services/auth.service";
+import { ProfileService } from "@/services/profile.service";
 import { UserService } from "@/services/user.service";
-import type { ILoginPayload, IRegisterPayload, IUser } from "@/types/auth";
+import type {
+    IChangePasswordPayload,
+    ILoginPayload,
+    IRegisterPayload,
+    IUpdateProfilePayload,
+    IUser,
+} from "@/types/auth";
 import {
     getTokenFromLocalStorage,
     removeTokenFromLocalStorage,
@@ -42,10 +49,25 @@ class UserStore {
         runInAction(() => this.login(user));
     };
 
+    // Регистрация не логинит: сначала нужно подтвердить email по ссылке из письма
     signUp = async (payload: IRegisterPayload) => {
-        const { token, user } = await AuthService.register(payload);
-        setTokenToLocalStorage(token);
-        runInAction(() => this.login(user));
+        await AuthService.register(payload);
+    };
+
+    updateProfile = async (payload: IUpdateProfilePayload) => {
+        const user = await ProfileService.update(payload);
+        runInAction(() => {
+            this.user = user;
+        });
+    };
+
+    changePassword = async (payload: IChangePasswordPayload) => {
+        await ProfileService.changePassword(payload);
+    };
+
+    deleteAccount = async () => {
+        await ProfileService.remove();
+        runInAction(() => this.logout());
     };
 
     login(userData: IUser) {

@@ -22,13 +22,27 @@ services:
       - ./backend/database:/var/www/database
       - ./backend/public:/var/www/public_html
       - ./backend/migrate.php:/var/www/migrate.php
+      - ./backend/seed.php:/var/www/seed.php
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_TTL: ${JWT_TTL:-86400}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:8082}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8081}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - network2
 
@@ -58,5 +72,105 @@ services:
       ADMINER_DEFAULT_SERVER: postgres
     depends_on:
       - postgres
+    networks:
+      - network2
+
+  admin:
+    build:
+      context: ./admin-panel
+    ports:
+      - "8082:80"
+    depends_on:
+      - php
+      - notification-nginx
+    networks:
+      - network2
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./notification-service/mongo-data:/data/db
+    networks:
+      - network2
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    networks:
+      - network2
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - network2
+
+  notification:
+    build:
+      context: ./notification-service
+    volumes:
+      - ./notification-service/src:/var/www/src
+      - ./notification-service/config:/var/www/config
+      - ./notification-service/routes:/var/www/routes
+      - ./notification-service/public:/var/www/public_html
+      - ./notification-service/consume.php:/var/www/consume.php
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: ${MONGO_DATABASE:-notifications}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_TTL: ${JWT_TTL:-86400}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:8082}
+    depends_on:
+      - mongo
+      - rabbitmq
+    networks:
+      - network2
+
+  notification-nginx:
+    image: nginx:alpine
+    ports:
+      - "8083:80"
+    volumes:
+      - ./notification-service/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - notification
+    networks:
+      - network2
+
+  notification-worker:
+    build:
+      context: ./notification-service
+    command: ["php", "/var/www/consume.php"]
+    volumes:
+      - ./notification-service/src:/var/www/src
+      - ./notification-service/config:/var/www/config
+      - ./notification-service/consume.php:/var/www/consume.php
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: ${MONGO_DATABASE:-notifications}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+    depends_on:
+      - mongo
+      - rabbitmq
     networks:
       - network2

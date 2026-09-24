@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Dto\LoginDto;
 use App\Dto\RegisterDto;
 use App\Dto\UserDto;
+use App\Dto\VerifyEmailDto;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\ResponseFactory;
@@ -26,9 +27,17 @@ final class AuthController
     public function register(Request $request): Response
     {
         $dto = RegisterDto::fromArray($request->json());
-        $result = $this->auth->register($dto);
+        $user = $this->auth->register($dto);
 
-        return $this->response->created(AuthResource::fromDto($result));
+        return $this->response->created(UserResource::fromDto($user));
+    }
+
+    public function verifyEmail(Request $request): Response
+    {
+        $dto = VerifyEmailDto::fromArray($request->json());
+        $user = $this->auth->verifyEmail($dto->token);
+
+        return $this->response->ok(UserResource::fromDto($user));
     }
 
     public function login(Request $request): Response
