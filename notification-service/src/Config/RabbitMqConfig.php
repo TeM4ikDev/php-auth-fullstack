@@ -13,6 +13,10 @@ final class RabbitMqConfig
         public readonly string $password,
         public readonly string $exchange,
         public readonly string $queue,
+        public readonly string $retryExchange,
+        public readonly string $requeueExchange,
+        public readonly string $dlxExchange,
+        public readonly string $dlqQueue,
     ) {
     }
 
@@ -26,6 +30,15 @@ final class RabbitMqConfig
             $config->get('RABBITMQ_PASSWORD', 'guest'),
             'app_events',
             'notification_service_events',
+            'notification_retry',
+            'notification_requeue',
+            'notification_dlx',
+            'notification_service_events.dlq',
         );
+    }
+
+    public function retryQueue(int $attempt): string
+    {
+        return $this->retryExchange . '.' . $attempt;
     }
 }

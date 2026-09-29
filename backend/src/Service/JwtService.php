@@ -5,6 +5,13 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Config\JwtConfig;
+use App\Dto\TokenPayloadDto;
+use App\Dto\UserDto;
+use App\Enum\TokenType;
+use App\Service\Exception\InvalidTokenException;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Throwable;
 
 final class JwtService
 {
@@ -12,72 +19,52 @@ final class JwtService
     {
     }
 
-    public function encode(array $claims): string
+    public function issueAccess(UserDto $user, string $sessionId): string
+    {
+        return $this->issue($user, $sessionId, TokenType::Access, $this->config->accessTtlSeconds);
+    }
+
+    public function issueRefresh(UserDto $user, string $sessionId): string
+    {
+        return $this->issue($user, $sessionId, TokenType::Refresh, $this->config->refreshTtlSeconds);
+    }
+
+    public function accessTtlSeconds(): int
+    {
+        return $this->config->accessTtlSeconds;
+    }
+
+    public function refreshTtlSeconds(): int
+    {
+        return $this->config->refreshTtlSeconds;
+    }
+
+    public function decode(string $token): TokenPayloadDto
+    {
+        try {
+            $decoded = JWT::decode($token, new Key($this->config->secret, $this->config->algorithm));
+
+            return TokenPayloadDto::fromClaims((array) $decoded);
+        } catch (Throwable $e) {
+            throw new InvalidTokenException();
+        }
+    }
+
+    private function issue(UserDto $user, string $sessionId, TokenType $type, int $ttlSeconds): string
     {
         $issuedAt = time();
 
-        $payload = array_merge($claims, [
+        $claims = [
+            'sub' => $user->id,
+            'email' => $user->email,
+            'role' => $user->role->value,
+            'sid' => $sessionId,
+            'jti' => bin2hex(random_bytes(16)),
+            'typ' => $type->value,
             'iat' => $issuedAt,
-            'exp' => $issuedAt + $this->config->ttlSeconds,
-        ]);
+            'exp' => $issuedAt + $ttlSeconds,
+        ];
 
-        $header = $this->base64UrlEncode($this->json(['alg' => $this->config->algorithm, 'typ' => 'JWT']));
-        $body = $this->base64UrlEncode($this->json($payload));
-        $signature = $this->sign($header . '.' . $body);
-
-        return $header . '.' . $body . '.' . $signature;
-    }
-
-    public function decode(string $token): ?array
-    {
-        $parts = explode('.', $token);
-
-        if (count($parts) !== 3) {
-            return null;
-        }
-
-        [$header, $body, $signature] = $parts;
-
-        if (!hash_equals($this->sign($header . '.' . $body), $signature)) {
-            return null;
-        }
-
-        $decodedHeader = json_decode($this->base64UrlDecode($header), true);
-
-        if (!is_array($decodedHeader) || ($decodedHeader['alg'] ?? '') !== $this->config->algorithm) {
-            return null;
-        }
-
-        $payload = json_decode($this->base64UrlDecode($body), true);
-
-        if (!is_array($payload)) {
-            return null;
-        }
-
-        if (isset($payload['exp']) && time() >= (int) $payload['exp']) {
-            return null;
-        }
-
-        return $payload;
-    }
-
-    private function sign(string $data): string
-    {
-        return $this->base64UrlEncode(hash_hmac('sha256', $data, $this->config->secret, true));
-    }
-
-    private function json(array $data): string
-    {
-        return (string) json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    }
-
-    private function base64UrlEncode(string $data): string
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    private function base64UrlDecode(string $data): string
-    {
-        return (string) base64_decode(strtr($data, '-_', '+/'), true);
+        return JWT::encode($claims, $this->config->secret, $this->config->algorithm);
     }
 }

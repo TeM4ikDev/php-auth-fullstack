@@ -25,7 +25,7 @@ final class AppConfig
             60,
             60,
             5,
-            ['/api/auth/login', '/api/auth/register'],
+            ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'],
             $config->get('CLIENT_URL', 'http://localhost:8081'),
         );
     }

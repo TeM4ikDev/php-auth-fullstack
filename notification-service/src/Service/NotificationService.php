@@ -5,32 +5,19 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\CreateNotificationDto;
-use App\Dto\NotificationDto;
-use App\Repository\NotificationRepositoryInterface;
-use Throwable;
 
-final class NotificationService
+final class NotificationService implements NotificationSenderInterface
 {
-    public function __construct(
-        private readonly NotificationRepositoryInterface $notifications,
-        private readonly MailerInterface $mailer,
-    ) {
+    public function __construct(private readonly MailerInterface $mailer)
+    {
     }
 
-    public function recordAndSend(CreateNotificationDto $dto): NotificationDto
+    /** Не глотает исключения — вызывающий (NotificationProcessor) должен отличать успех от сбоя. */
+    public function send(CreateNotificationDto $dto): void
     {
-        $notification = $this->notifications->create($dto);
+        [$subject, $body] = $this->renderEmail($dto);
 
-        try {
-            [$subject, $body] = $this->renderEmail($dto);
-            $this->mailer->send($dto->recipient, $subject, $body);
-
-            return $this->notifications->markSent($notification->id);
-        } catch (Throwable $e) {
-            error_log("Failed to send notification [{$notification->id}]: " . $e->getMessage());
-
-            return $this->notifications->markFailed($notification->id);
-        }
+        $this->mailer->send($dto->recipient, $subject, $body);
     }
 
     private function renderEmail(CreateNotificationDto $dto): array

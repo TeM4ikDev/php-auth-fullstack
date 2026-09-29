@@ -18,6 +18,7 @@ final class UserManagementService
     public function __construct(
         private readonly UserRepositoryInterface $users,
         private readonly AccessPolicy $policy,
+        private readonly SessionRevocationService $sessionRevocation,
     ) {
     }
 
@@ -66,10 +67,12 @@ final class UserManagementService
 
         if ($target->role !== $dto->role) {
             $updated = $this->users->setRole($updated->id, $dto->role);
+            $this->sessionRevocation->revokeAllSessions($updated->id);
         }
 
         if ($target->banned !== $dto->banned) {
             $updated = $this->users->setBanned($updated->id, $dto->banned);
+            $this->sessionRevocation->revokeAllSessions($updated->id);
         }
 
         return $updated;
@@ -83,7 +86,10 @@ final class UserManagementService
             throw new ForbiddenException('You cannot ban yourself.');
         }
 
-        return $this->users->setBanned($target->id, $banned);
+        $updated = $this->users->setBanned($target->id, $banned);
+        $this->sessionRevocation->revokeAllSessions($target->id);
+
+        return $updated;
     }
 
     public function setRole(UserDto $actor, int $id, UserRole $role): UserDto
@@ -94,6 +100,9 @@ final class UserManagementService
             throw new ForbiddenException('You cannot change your own role.');
         }
 
-        return $this->users->setRole($target->id, $role);
+        $updated = $this->users->setRole($target->id, $role);
+        $this->sessionRevocation->revokeAllSessions($target->id);
+
+        return $updated;
     }
 }

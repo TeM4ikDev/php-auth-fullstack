@@ -36,6 +36,8 @@ class ApiConfig {
         login: "login",
         register: "register",
         verifyEmail: "verify-email",
+        refresh: "refresh",
+        logout: "logout",
         profile: "profile",
     };
 

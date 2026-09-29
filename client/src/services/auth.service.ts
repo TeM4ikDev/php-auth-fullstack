@@ -26,6 +26,10 @@ class authService {
         return data;
     }
 
+    async logout(refreshToken: string | null): Promise<void> {
+        await this.instance.post(this.baseUrl.logout, { refreshToken });
+    }
+
     async getProfile(): Promise<IUser | null> {
         try {
             const { data } = await this.instance.get<IUser>(this.baseUrl.profile);

@@ -1,0 +1,5 @@
+vendor
+mongo-data
+tests
+.idea
+.phpunit.cache

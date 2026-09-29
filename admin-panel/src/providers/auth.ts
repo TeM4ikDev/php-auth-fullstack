@@ -1,16 +1,21 @@
 import type { AuthProvider } from "@refinedev/core";
-import { TOKEN_KEY } from "./constants";
+import { REFRESH_TOKEN_KEY, TOKEN_KEY } from "./constants";
 import { HttpError, request } from "./http";
 import { UserRoles, type IUser } from "../types";
 
-type LoginResponse = { token: string; user: IUser };
+type LoginResponse = { accessToken: string; refreshToken: string; user: IUser };
 
 const me = () => request<IUser>("users/me");
+
+const clearTokens = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+};
 
 export const authProvider: AuthProvider = {
   login: async ({ email, password }) => {
     try {
-      const { token, user } = await request<LoginResponse>("auth/login", {
+      const { accessToken, refreshToken, user } = await request<LoginResponse>("auth/login", {
         method: "POST",
         body: { email, password },
       });
@@ -23,7 +28,8 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(TOKEN_KEY, accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 
       return { success: true, redirectTo: "/" };
     } catch (error) {
@@ -38,7 +44,15 @@ export const authProvider: AuthProvider = {
   },
 
   logout: async () => {
-    localStorage.removeItem(TOKEN_KEY);
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    try {
+      await request("auth/logout", { method: "POST", body: { refreshToken } });
+    } catch {
+      // Токен уже мог истечь — это не должно мешать локальному разлогину
+    }
+
+    clearTokens();
 
     return { success: true, redirectTo: "/login" };
   },
@@ -52,7 +66,7 @@ export const authProvider: AuthProvider = {
       const user = await me();
 
       if (user.role !== UserRoles.Admin && user.role !== UserRoles.Analyst) {
-        localStorage.removeItem(TOKEN_KEY);
+        clearTokens();
 
         return { authenticated: false, redirectTo: "/login", error: new Error("Administrators and analysts only") };
       }
@@ -60,7 +74,7 @@ export const authProvider: AuthProvider = {
       return { authenticated: true };
     } catch {
       // Истёкший токен или бан: оба случая означают, что сессии больше нет
-      localStorage.removeItem(TOKEN_KEY);
+      clearTokens();
 
       return { authenticated: false, redirectTo: "/login" };
     }
@@ -86,7 +100,7 @@ export const authProvider: AuthProvider = {
 
   onError: async (error) => {
     if (error instanceof HttpError && (error.statusCode === 401 || error.statusCode === 403)) {
-      localStorage.removeItem(TOKEN_KEY);
+      clearTokens();
 
       return { logout: true, redirectTo: "/login", error };
     }

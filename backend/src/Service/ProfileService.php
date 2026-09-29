@@ -15,6 +15,7 @@ final class ProfileService
     public function __construct(
         private readonly UserRepositoryInterface $users,
         private readonly PasswordService $password,
+        private readonly SessionRevocationService $sessionRevocation,
     ) {
     }
 
@@ -23,6 +24,7 @@ final class ProfileService
         return $this->users->update($user->id, $dto);
     }
 
+    /** Смена пароля отзывает все сессии — иначе украденный старый пароль всё ещё держал бы активный вход. */
     public function changePassword(UserDto $user, ChangePasswordDto $dto): void
     {
         if (!$this->password->verify($dto->currentPassword, $user->passwordHash)) {
@@ -30,10 +32,12 @@ final class ProfileService
         }
 
         $this->users->updatePassword($user->id, $this->password->hash($dto->newPassword));
+        $this->sessionRevocation->revokeAllSessions($user->id);
     }
 
     public function delete(UserDto $user): void
     {
         $this->users->softDelete($user->id);
+        $this->sessionRevocation->revokeAllSessions($user->id);
     }
 }

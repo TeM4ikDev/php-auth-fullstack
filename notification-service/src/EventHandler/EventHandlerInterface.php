@@ -6,5 +6,5 @@ namespace App\EventHandler;
 
 interface EventHandlerInterface
 {
-    public function handle(array $payload): void;
+    public function handle(array $payload, int $attempt, ?string $notificationId): void;
 }

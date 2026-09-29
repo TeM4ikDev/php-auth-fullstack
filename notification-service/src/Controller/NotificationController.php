@@ -9,6 +9,7 @@ use App\Http\Response;
 use App\Http\ResponseFactory;
 use App\Resource\NotificationResource;
 use App\Service\NotificationQueryService;
+use App\Service\NotificationReplayService;
 
 final class NotificationController
 {
@@ -18,6 +19,7 @@ final class NotificationController
 
     public function __construct(
         private readonly NotificationQueryService $notifications,
+        private readonly NotificationReplayService $replay,
         private readonly ResponseFactory $response,
     ) {
     }
@@ -42,6 +44,13 @@ final class NotificationController
     public function show(Request $request): Response
     {
         $notification = $this->notifications->find((string) $request->routeParam('id'));
+
+        return $this->response->ok(NotificationResource::fromDto($notification));
+    }
+
+    public function replay(Request $request): Response
+    {
+        $notification = $this->replay->replay((string) $request->routeParam('id'));
 
         return $this->response->ok(NotificationResource::fromDto($notification));
     }

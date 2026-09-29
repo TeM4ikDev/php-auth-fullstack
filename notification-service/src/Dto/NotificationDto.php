@@ -20,6 +20,8 @@ final class NotificationDto
         public readonly string $createdAt,
         public readonly string $updatedAt,
         public readonly ?string $sentAt,
+        public readonly ?string $lastError,
+        public readonly bool $deadLettered,
     ) {
     }
 }

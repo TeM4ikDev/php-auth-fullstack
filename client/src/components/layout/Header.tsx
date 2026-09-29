@@ -32,8 +32,8 @@ export const Header = observer(() => {
     const {isAuth, isLoading} = userStore;
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        userStore.logout();
+    const handleLogout = async () => {
+        await userStore.signOut();
         navigate(RoutesConfig.LOGIN.path, {replace: true});
         toast.success("You have been logged out")
     };

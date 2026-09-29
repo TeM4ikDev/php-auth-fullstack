@@ -40,6 +40,8 @@ final class MongoNotificationRepository implements NotificationRepositoryInterfa
             'createdAt' => $now,
             'updatedAt' => $now,
             'sentAt' => null,
+            'lastError' => null,
+            'deadLettered' => false,
         ];
 
         $result = $this->collection->insertOne($document);
@@ -50,12 +52,39 @@ final class MongoNotificationRepository implements NotificationRepositoryInterfa
 
     public function markSent(string $id): NotificationDto
     {
-        return $this->updateStatus($id, NotificationStatus::Sent);
+        return $this->applyUpdate($id, [
+            'status' => NotificationStatus::Sent->value,
+            'sentAt' => new UTCDateTime(),
+            'lastError' => null,
+        ], incrementAttempts: true);
     }
 
-    public function markFailed(string $id): NotificationDto
+    public function markRetrying(string $id, string $error): NotificationDto
     {
-        return $this->updateStatus($id, NotificationStatus::Failed);
+        return $this->applyUpdate($id, [
+            'status' => NotificationStatus::Retrying->value,
+            'lastError' => $error,
+        ], incrementAttempts: true);
+    }
+
+    public function markFailed(string $id, string $error, bool $deadLettered): NotificationDto
+    {
+        return $this->applyUpdate($id, [
+            'status' => NotificationStatus::Failed->value,
+            'lastError' => $error,
+            'deadLettered' => $deadLettered,
+        ], incrementAttempts: true);
+    }
+
+    public function resetForReplay(string $id): NotificationDto
+    {
+        return $this->applyUpdate($id, [
+            'status' => NotificationStatus::Pending->value,
+            'attempts' => 0,
+            'lastError' => null,
+            'deadLettered' => false,
+            'sentAt' => null,
+        ], incrementAttempts: false);
     }
 
     public function findById(string $id): ?NotificationDto
@@ -80,17 +109,18 @@ final class MongoNotificationRepository implements NotificationRepositoryInterfa
         return $this->collection->countDocuments($this->buildFilter($filters));
     }
 
-    private function updateStatus(string $id, NotificationStatus $status): NotificationDto
+    private function applyUpdate(string $id, array $set, bool $incrementAttempts): NotificationDto
     {
         $objectId = new ObjectId($id);
+        $set['updatedAt'] = new UTCDateTime();
 
-        $set = ['status' => $status->value, 'updatedAt' => new UTCDateTime()];
+        $update = ['$set' => $set];
 
-        if ($status === NotificationStatus::Sent) {
-            $set['sentAt'] = new UTCDateTime();
+        if ($incrementAttempts) {
+            $update['$inc'] = ['attempts' => 1];
         }
 
-        $this->collection->updateOne(['_id' => $objectId], ['$set' => $set, '$inc' => ['attempts' => 1]]);
+        $this->collection->updateOne(['_id' => $objectId], $update);
 
         return $this->findById($id) ?? throw new RuntimeException("Notification [{$id}] could not be updated.");
     }
@@ -123,6 +153,8 @@ final class MongoNotificationRepository implements NotificationRepositoryInterfa
             $this->formatDate($document['createdAt']),
             $this->formatDate($document['updatedAt']),
             $sentAt instanceof UTCDateTime ? $this->formatDate($sentAt) : null,
+            isset($document['lastError']) ? (string) $document['lastError'] : null,
+            (bool) ($document['deadLettered'] ?? false),
         );
     }
 

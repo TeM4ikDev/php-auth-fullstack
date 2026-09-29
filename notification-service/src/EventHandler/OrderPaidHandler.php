@@ -6,10 +6,8 @@ namespace App\EventHandler;
 
 final class OrderPaidHandler implements EventHandlerInterface
 {
-    public function handle(array $payload): void
+    public function handle(array $payload, int $attempt, ?string $notificationId): void
     {
-
-        //
-
+        // Order Service не реализован в этом проекте — обработчик оставлен пустым
     }
 }

@@ -8,13 +8,13 @@ use App\Config\AppConfig;
 use App\Http\Exception\TooManyRequestsException;
 use App\Http\Request;
 use App\Http\Response;
-use App\Service\RateLimiterService;
+use App\Service\RateLimiterInterface;
 use Closure;
 
 final class RateLimitMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly RateLimiterService $limiter,
+        private readonly RateLimiterInterface $limiter,
         private readonly AppConfig $config,
     ) {
     }

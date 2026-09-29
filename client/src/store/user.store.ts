@@ -9,8 +9,10 @@ import type {
     IUser,
 } from "@/types/auth";
 import {
+    getRefreshTokenFromLocalStorage,
     getTokenFromLocalStorage,
     removeTokenFromLocalStorage,
+    setRefreshTokenToLocalStorage,
     setTokenToLocalStorage,
 } from "@/utils/localstorage";
 import { makeAutoObservable, runInAction } from "mobx";
@@ -44,8 +46,9 @@ class UserStore {
     };
 
     signIn = async (payload: ILoginPayload) => {
-        const { token, user } = await AuthService.login(payload);
-        setTokenToLocalStorage(token);
+        const { accessToken, refreshToken, user } = await AuthService.login(payload);
+        setTokenToLocalStorage(accessToken);
+        setRefreshTokenToLocalStorage(refreshToken);
         runInAction(() => this.login(user));
     };
 
@@ -68,6 +71,17 @@ class UserStore {
     deleteAccount = async () => {
         await ProfileService.remove();
         runInAction(() => this.logout());
+    };
+
+    /** Пользовательский "выйти" — в отличие от logout(), ещё и отзывает сессию на бэкенде. */
+    signOut = async () => {
+        try {
+            await AuthService.logout(getRefreshTokenFromLocalStorage());
+        } catch (error) {
+            console.error("Failed to revoke the session on the server:", error);
+        } finally {
+            this.logout();
+        }
     };
 
     login(userData: IUser) {

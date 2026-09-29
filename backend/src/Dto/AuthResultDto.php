@@ -7,7 +7,9 @@ namespace App\Dto;
 final class AuthResultDto
 {
     public function __construct(
-        public readonly string $token,
+        public readonly string $accessToken,
+        public readonly string $refreshToken,
+        public readonly int $expiresIn,
         public readonly UserDto $user,
     ) {
     }

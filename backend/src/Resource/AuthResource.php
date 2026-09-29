@@ -11,7 +11,9 @@ final class AuthResource
     public static function fromDto(AuthResultDto $result): array
     {
         return [
-            'token' => $result->token,
+            'accessToken' => $result->accessToken,
+            'refreshToken' => $result->refreshToken,
+            'expiresIn' => $result->expiresIn,
             'user' => UserResource::fromDto($result->user),
         ];
     }

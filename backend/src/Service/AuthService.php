@@ -9,12 +9,19 @@ use App\Dto\AuthResultDto;
 use App\Dto\CreateUserDto;
 use App\Dto\LoginDto;
 use App\Dto\RegisterDto;
+use App\Dto\SessionDto;
+use App\Dto\TokenPayloadDto;
 use App\Dto\UserDto;
+use App\Enum\TokenType;
 use App\Http\Exception\ForbiddenException;
 use App\Messaging\EventPublisherInterface;
+use App\Repository\RefreshTokenRepositoryInterface;
+use App\Repository\SessionRepositoryInterface;
+use App\Repository\TokenBlacklistRepositoryInterface;
 use App\Repository\UserRepositoryInterface;
 use App\Service\Exception\EmailNotVerifiedException;
 use App\Service\Exception\InvalidCredentialsException;
+use App\Service\Exception\InvalidRefreshTokenException;
 use App\Service\Exception\InvalidVerificationTokenException;
 use Throwable;
 
@@ -27,6 +34,9 @@ final class AuthService
         private readonly MailerInterface $mailer,
         private readonly EventPublisherInterface $eventPublisher,
         private readonly AppConfig $appConfig,
+        private readonly SessionRepositoryInterface $sessions,
+        private readonly RefreshTokenRepositoryInterface $refreshTokens,
+        private readonly TokenBlacklistRepositoryInterface $blacklist,
     ) {
     }
 
@@ -65,7 +75,49 @@ final class AuthService
             throw new EmailNotVerifiedException();
         }
 
-        return $this->issueToken($user);
+        $sessionId = $this->startSession($user->id);
+
+        return $this->issueTokenPair($user, $sessionId);
+    }
+
+    /** Ротация: предъявленный refresh-токен сразу удаляется — повторное предъявление больше не сработает. */
+    public function refresh(string $refreshToken): AuthResultDto
+    {
+        $payload = $this->jwt->decode($refreshToken);
+
+        if ($payload->type !== TokenType::Refresh) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        $stored = $this->refreshTokens->findByToken($refreshToken);
+
+        if ($stored === null) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        $user = $this->users->findById($stored->userId);
+
+        if ($user === null || $user->banned) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        $this->refreshTokens->delete($refreshToken);
+        $this->sessions->touch($user->id, $stored->sessionId, $this->jwt->refreshTtlSeconds());
+
+        return $this->issueTokenPair($user, $stored->sessionId);
+    }
+
+    public function logout(TokenPayloadDto $accessPayload, ?string $refreshToken): void
+    {
+        $this->blacklist->revoke($accessPayload->jti, $accessPayload->expiresAt - time());
+
+        if ($refreshToken !== null) {
+            $this->refreshTokens->delete($refreshToken);
+        } else {
+            $this->refreshTokens->deleteForSession($accessPayload->userId, $accessPayload->sessionId);
+        }
+
+        $this->sessions->end($accessPayload->userId, $accessPayload->sessionId);
     }
 
     public function verifyEmail(string $token): UserDto
@@ -82,6 +134,28 @@ final class AuthService
     public function findById(int $id): ?UserDto
     {
         return $this->users->findById($id);
+    }
+
+    private function startSession(int $userId): string
+    {
+        $sessionId = bin2hex(random_bytes(16));
+
+        $this->sessions->start(
+            new SessionDto($sessionId, $userId, gmdate(DATE_ATOM)),
+            $this->jwt->refreshTtlSeconds(),
+        );
+
+        return $sessionId;
+    }
+
+    private function issueTokenPair(UserDto $user, string $sessionId): AuthResultDto
+    {
+        $accessToken = $this->jwt->issueAccess($user, $sessionId);
+        $refreshToken = $this->jwt->issueRefresh($user, $sessionId);
+
+        $this->refreshTokens->store($refreshToken, $user->id, $sessionId, $this->jwt->refreshTtlSeconds());
+
+        return new AuthResultDto($accessToken, $refreshToken, $this->jwt->accessTtlSeconds(), $user);
     }
 
     /**
@@ -113,16 +187,5 @@ final class AuthService
         } catch (Throwable $e) {
             error_log('Failed to publish user.registered event: ' . $e->getMessage());
         }
-    }
-
-    private function issueToken(UserDto $user): AuthResultDto
-    {
-        $token = $this->jwt->encode([
-            'sub' => $user->id,
-            'email' => $user->email,
-            'role' => $user->role->value,
-        ]);
-
-        return new AuthResultDto($token, $user);
     }
 }

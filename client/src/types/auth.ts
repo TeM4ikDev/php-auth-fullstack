@@ -34,6 +34,8 @@ export interface IChangePasswordPayload {
 }
 
 export interface IAuthResponse {
-    token: string;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
     user: IUser;
 }

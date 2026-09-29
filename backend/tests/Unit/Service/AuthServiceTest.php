@@ -8,14 +8,19 @@ use App\Config\AppConfig;
 use App\Config\JwtConfig;
 use App\Dto\CreateUserDto;
 use App\Dto\LoginDto;
+use App\Dto\RefreshTokenDto;
 use App\Dto\RegisterDto;
 use App\Dto\UserDto;
 use App\Enum\UserRole;
 use App\Http\Exception\ForbiddenException;
 use App\Messaging\EventPublisherInterface;
+use App\Repository\RefreshTokenRepositoryInterface;
+use App\Repository\SessionRepositoryInterface;
+use App\Repository\TokenBlacklistRepositoryInterface;
 use App\Repository\UserRepositoryInterface;
 use App\Service\AuthService;
 use App\Service\Exception\InvalidCredentialsException;
+use App\Service\Exception\InvalidRefreshTokenException;
 use App\Service\JwtService;
 use App\Service\MailerInterface;
 use App\Service\PasswordService;
@@ -47,6 +52,9 @@ final class AuthServiceTest extends TestCase
             $this->createStub(MailerInterface::class),
             $this->createStub(EventPublisherInterface::class),
             $this->appConfig(),
+            $this->createStub(SessionRepositoryInterface::class),
+            $this->createStub(RefreshTokenRepositoryInterface::class),
+            $this->createStub(TokenBlacklistRepositoryInterface::class),
         );
 
         $user = $service->register(RegisterDto::fromArray([
@@ -68,11 +76,11 @@ final class AuthServiceTest extends TestCase
         $service = $this->service($users, $jwt);
 
         $result = $service->login(LoginDto::fromArray(['email' => 'artem@example.com', 'password' => 'secret123']));
-        $payload = $jwt->decode($result->token);
+        $payload = $jwt->decode($result->accessToken);
 
-        self::assertNotNull($payload);
-        self::assertSame('ANALYST', $payload['role']);
-        self::assertSame(1, $payload['sub']);
+        self::assertSame(UserRole::Analyst, $payload->role);
+        self::assertSame(1, $payload->userId);
+        self::assertSame($result->expiresIn, $jwt->accessTtlSeconds());
     }
 
     #[Test]
@@ -111,8 +119,48 @@ final class AuthServiceTest extends TestCase
             ->login(LoginDto::fromArray(['email' => 'artem@example.com', 'password' => 'secret123']));
     }
 
-    private function service(UserRepositoryInterface $users, ?JwtService $jwt = null): AuthService
+    #[Test]
+    public function refreshing_rotates_the_token_and_rejects_the_old_one(): void
     {
+        $user = $this->user();
+        $users = $this->createStub(UserRepositoryInterface::class);
+        $users->method('findByEmail')->willReturn($user);
+        $users->method('findById')->willReturn($user);
+
+        $refreshTokens = new InMemoryRefreshTokenRepository();
+        $service = $this->service($users, refreshTokens: $refreshTokens);
+
+        $issued = $service->login(LoginDto::fromArray(['email' => 'artem@example.com', 'password' => 'secret123']));
+        $rotated = $service->refresh($issued->refreshToken);
+
+        self::assertNotSame($issued->refreshToken, $rotated->refreshToken);
+
+        $this->expectException(InvalidRefreshTokenException::class);
+
+        $service->refresh($issued->refreshToken);
+    }
+
+    #[Test]
+    public function logout_blacklists_the_access_token(): void
+    {
+        $blacklist = new InMemoryTokenBlacklistRepository();
+        $service = $this->service($this->createStub(UserRepositoryInterface::class), blacklist: $blacklist);
+
+        $jwt = $this->jwt();
+        $payload = $jwt->decode($jwt->issueAccess($this->user(), 'session-1'));
+
+        $service->logout($payload, null);
+
+        self::assertTrue($blacklist->isRevoked($payload->jti));
+    }
+
+    private function service(
+        UserRepositoryInterface $users,
+        ?JwtService $jwt = null,
+        ?SessionRepositoryInterface $sessions = null,
+        ?RefreshTokenRepositoryInterface $refreshTokens = null,
+        ?TokenBlacklistRepositoryInterface $blacklist = null,
+    ): AuthService {
         return new AuthService(
             $users,
             new PasswordService(),
@@ -120,6 +168,9 @@ final class AuthServiceTest extends TestCase
             $this->createStub(MailerInterface::class),
             $this->createStub(EventPublisherInterface::class),
             $this->appConfig(),
+            $sessions ?? $this->createStub(SessionRepositoryInterface::class),
+            $refreshTokens ?? $this->createStub(RefreshTokenRepositoryInterface::class),
+            $blacklist ?? $this->createStub(TokenBlacklistRepositoryInterface::class),
         );
     }
 
@@ -142,11 +193,58 @@ final class AuthServiceTest extends TestCase
 
     private function jwt(): JwtService
     {
-        return new JwtService(new JwtConfig('unit-test-secret', 3600));
+        // firebase/php-jwt требует ключ не короче 32 байт для HS256
+        return new JwtService(new JwtConfig('unit-test-secret-0123456789abcdef0123456789', 3600, 2_592_000));
     }
 
     private function appConfig(): AppConfig
     {
         return new AppConfig([], 60, 60, 5, [], 'http://localhost:8081');
+    }
+}
+
+/** Лёгкая тестовая замена Redis — только то, что реально нужно ротации в тесте. */
+final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInterface
+{
+    private array $tokens = [];
+
+    public function store(string $refreshToken, int $userId, string $sessionId, int $ttlSeconds): void
+    {
+        $this->tokens[$refreshToken] = new RefreshTokenDto($userId, $sessionId);
+    }
+
+    public function findByToken(string $refreshToken): ?RefreshTokenDto
+    {
+        return $this->tokens[$refreshToken] ?? null;
+    }
+
+    public function delete(string $refreshToken): void
+    {
+        unset($this->tokens[$refreshToken]);
+    }
+
+    public function deleteForSession(int $userId, string $sessionId): void
+    {
+        foreach ($this->tokens as $token => $dto) {
+            if ($dto->userId === $userId && $dto->sessionId === $sessionId) {
+                unset($this->tokens[$token]);
+            }
+        }
+    }
+}
+
+/** Лёгкая тестовая замена Redis для проверки logout(). */
+final class InMemoryTokenBlacklistRepository implements TokenBlacklistRepositoryInterface
+{
+    private array $revoked = [];
+
+    public function revoke(string $jti, int $ttlSeconds): void
+    {
+        $this->revoked[$jti] = true;
+    }
+
+    public function isRevoked(string $jti): bool
+    {
+        return isset($this->revoked[$jti]);
     }
 }

@@ -13,6 +13,8 @@ use App\Http\Middleware\RequireAdminMiddleware;
 $router->post('/api/auth/register', [AuthController::class, 'register']);
 $router->post('/api/auth/login', [AuthController::class, 'login']);
 $router->post('/api/auth/verify-email', [AuthController::class, 'verifyEmail']);
+$router->post('/api/auth/refresh', [AuthController::class, 'refresh']);
+$router->post('/api/auth/logout', [AuthController::class, 'logout'])->middleware(AuthMiddleware::class);
 
 $router->get('/api/auth/profile', [AuthController::class, 'me'])->middleware(AuthMiddleware::class);
 $router->get('/api/users/me', [AuthController::class, 'me'])->middleware(AuthMiddleware::class);

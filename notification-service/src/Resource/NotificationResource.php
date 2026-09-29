@@ -22,6 +22,8 @@ final class NotificationResource
             'createdAt' => $notification->createdAt,
             'updatedAt' => $notification->updatedAt,
             'sentAt' => $notification->sentAt,
+            'lastError' => $notification->lastError,
+            'deadLettered' => $notification->deadLettered,
         ];
     }
 

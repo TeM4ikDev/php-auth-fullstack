@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\LoginDto;
+use App\Dto\RefreshTokenRequestDto;
 use App\Dto\RegisterDto;
+use App\Dto\TokenPayloadDto;
 use App\Dto\UserDto;
 use App\Dto\VerifyEmailDto;
 use App\Http\Request;
@@ -48,6 +50,24 @@ final class AuthController
         return $this->response->ok(AuthResource::fromDto($result));
     }
 
+    public function refresh(Request $request): Response
+    {
+        $dto = RefreshTokenRequestDto::fromArray($request->json());
+        $result = $this->auth->refresh($dto->refreshToken);
+
+        return $this->response->ok(AuthResource::fromDto($result));
+    }
+
+    public function logout(Request $request): Response
+    {
+        $body = $request->json();
+        $refreshToken = is_string($body['refreshToken'] ?? null) ? trim($body['refreshToken']) : '';
+
+        $this->auth->logout($this->tokenPayload($request), $refreshToken !== '' ? $refreshToken : null);
+
+        return $this->response->noContent();
+    }
+
     public function me(Request $request): Response
     {
         $user = $request->attribute('user');
@@ -57,5 +77,16 @@ final class AuthController
         }
 
         return $this->response->ok(UserResource::fromDto($user));
+    }
+
+    private function tokenPayload(Request $request): TokenPayloadDto
+    {
+        $payload = $request->attribute('tokenPayload');
+
+        if (!$payload instanceof TokenPayloadDto) {
+            throw new RuntimeException('Route is missing AuthMiddleware.');
+        }
+
+        return $payload;
     }
 }

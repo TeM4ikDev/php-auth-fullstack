@@ -13,7 +13,12 @@ interface NotificationRepositoryInterface
 
     public function markSent(string $id): NotificationDto;
 
-    public function markFailed(string $id): NotificationDto;
+    public function markRetrying(string $id, string $error): NotificationDto;
+
+    public function markFailed(string $id, string $error, bool $deadLettered): NotificationDto;
+
+    /** Готовит документ к повторной публикации после ручного реплея из DLQ. */
+    public function resetForReplay(string $id): NotificationDto;
 
     public function findById(string $id): ?NotificationDto;
 

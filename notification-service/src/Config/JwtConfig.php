@@ -8,7 +8,6 @@ final class JwtConfig
 {
     public function __construct(
         public readonly string $secret,
-        public readonly int $ttlSeconds,
         public readonly string $algorithm = 'HS256',
     ) {
     }
@@ -16,6 +15,6 @@ final class JwtConfig
     /** Секрет обязан совпадать с auth-service — иначе он не сможет провалидировать его токены. */
     public static function fromConfig(Config $config): self
     {
-        return new self($config->require('JWT_SECRET'), $config->getInt('JWT_TTL', 86400));
+        return new self($config->require('JWT_SECRET'));
     }
 }

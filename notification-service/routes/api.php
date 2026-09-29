@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controller\NotificationController;
 use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\RequireAdminMiddleware;
 use App\Http\Middleware\RequireAdminOrAnalystMiddleware;
 
 /** @var App\Http\Router $router */
@@ -13,3 +14,6 @@ $router->get('/api/notifications', [NotificationController::class, 'index'])
 
 $router->get('/api/notifications/{id}', [NotificationController::class, 'show'])
     ->middleware(AuthMiddleware::class, RequireAdminOrAnalystMiddleware::class);
+
+$router->post('/api/notifications/{id}/replay', [NotificationController::class, 'replay'])
+    ->middleware(AuthMiddleware::class, RequireAdminMiddleware::class);

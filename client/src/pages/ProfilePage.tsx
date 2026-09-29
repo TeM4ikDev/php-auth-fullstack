@@ -108,8 +108,8 @@ export const ProfilePage = observer(() => {
         }
     };
 
-    const handleLogout = () => {
-        userStore.logout();
+    const handleLogout = async () => {
+        await userStore.signOut();
         navigate(RoutesConfig.LOGIN.path, { replace: true });
     };
 
